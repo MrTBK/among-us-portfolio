@@ -120,11 +120,49 @@ export class GameWorld {
   }
 
   private loadMap() {
-    this.mapImage = new Image();
-    this.mapImage.onload = () => {
-      this.isMapLoaded = true;
+    const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 1024;
+    const candidates = isMobile
+      ? [
+          'Assets/Maps/map2_mobile.webp',
+          'Assets/Maps/map2_mobile.jpg',
+          'Assets/Maps/map2.webp',
+          'Assets/Maps/map2.jpg',
+          'Assets/Maps/map2.png'
+        ]
+      : [
+          'Assets/Maps/map2.webp',
+          'Assets/Maps/map2_mobile.webp',
+          'Assets/Maps/map2.jpg',
+          'Assets/Maps/map2_mobile.jpg',
+          'Assets/Maps/map2.png'
+        ];
+
+    let candidateIdx = 0;
+
+    const tryNext = () => {
+      if (candidateIdx >= candidates.length) {
+        console.error('All map image candidates failed to load.');
+        return;
+      }
+      const src = candidates[candidateIdx++];
+      const img = new Image();
+      img.onload = () => {
+        this.mapImage = img;
+        this.isMapLoaded = true;
+      };
+      img.onerror = () => {
+        console.warn(`Map image candidate failed (${src}), trying fallback...`);
+        tryNext();
+      };
+      img.src = src;
+
+      if (img.complete && img.naturalWidth > 0) {
+        this.mapImage = img;
+        this.isMapLoaded = true;
+      }
     };
-    this.mapImage.src = 'Assets/Maps/map2.png';
+
+    tryNext();
   }
 
   public handleResize() {
@@ -376,13 +414,23 @@ export class GameWorld {
     this.ctx.fillRect(0, 0, width, height);
 
     // 1. Draw Visible Slice of Map
-    if (this.isMapLoaded && this.mapImage) {
+    if (this.isMapLoaded && this.mapImage && this.mapImage.naturalWidth > 0) {
+      const imgW = this.mapImage.naturalWidth;
+      const imgH = this.mapImage.naturalHeight;
+      const scaleX = imgW / 5792;
+      const scaleY = imgH / 3168;
+
       const camX = Math.round(this.camera.x);
       const camY = Math.round(this.camera.y);
 
+      const srcX = Math.max(0, Math.min(imgW - width * scaleX, camX * scaleX));
+      const srcY = Math.max(0, Math.min(imgH - height * scaleY, camY * scaleY));
+      const srcW = Math.min(width * scaleX, imgW - srcX);
+      const srcH = Math.min(height * scaleY, imgH - srcY);
+
       this.ctx.drawImage(
         this.mapImage,
-        camX, camY, width, height,
+        srcX, srcY, srcW, srcH,
         0, 0, width, height
       );
     } else {

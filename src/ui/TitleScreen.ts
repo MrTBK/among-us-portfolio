@@ -191,8 +191,11 @@ export class TitleScreen {
     }, 110);
 
     // 2. Preload assets in parallel while advancing progress
+    const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 1024;
+    const mapSrc = isMobile ? 'Assets/Maps/map2_mobile.webp' : 'Assets/Maps/map2.webp';
+
     const criticalAssets = [
-      'Assets/Maps/map2.png',
+      mapSrc,
       'Assets/Images/menu/title.png',
       'Assets/Images/menu/shhhhhhh.png',
       'Assets/Images/Items/emergency_button.PNG',
@@ -207,7 +210,7 @@ export class TitleScreen {
     };
 
     criticalAssets.forEach(src => {
-      if (src.endsWith('.png') || src.endsWith('.PNG') || src.endsWith('.jpg')) {
+      if (src.endsWith('.png') || src.endsWith('.PNG') || src.endsWith('.jpg') || src.endsWith('.webp')) {
         const img = new Image();
         img.onload = onAssetLoaded;
         img.onerror = onAssetLoaded;

@@ -239,35 +239,51 @@ export class HUD {
       }
     };
 
-    // Vent Button Click (Bottom Right)
-    this.ventBtnEl.addEventListener('click', () => {
-      this.world.input.triggerVent();
+    // Fast and reliable tap listener for both mobile touch and desktop click
+    const addTapListener = (el: HTMLElement | null, handler: (e: Event) => void) => {
+      if (!el) return;
+      let lastTouch = 0;
+      el.addEventListener('touchstart', (e) => {
+        lastTouch = Date.now();
+        e.preventDefault();
+        e.stopPropagation();
+        handler(e);
+      }, { passive: false });
+
+      el.addEventListener('click', (e) => {
+        if (Date.now() - lastTouch < 450) return;
+        handler(e);
+      });
+    };
+
+    // Vent Button Tap (Bottom Right)
+    addTapListener(this.ventBtnEl, () => {
       const nearby = this.world.ventManager.nearbyVent;
-      if (nearby) {
+      if (nearby && !this.world.ventManager.isInsideVent) {
         this.world.enterVent(nearby);
       }
     });
 
     // In-Vent Controls
-    this.container.querySelector('#vent-prev-btn')?.addEventListener('click', () => {
+    addTapListener(this.container.querySelector('#vent-prev-btn') as HTMLElement, () => {
       this.world.hopPrevVent();
     });
-    this.container.querySelector('#vent-next-btn')?.addEventListener('click', () => {
+    addTapListener(this.container.querySelector('#vent-next-btn') as HTMLElement, () => {
       this.world.hopNextVent();
     });
-    this.container.querySelector('#vent-exit-btn')?.addEventListener('click', () => {
+    addTapListener(this.container.querySelector('#vent-exit-btn') as HTMLElement, () => {
       this.world.exitVent();
     });
 
-    // Use Button Click
-    this.actionBtnEl.addEventListener('click', () => {
+    // Use Button Tap
+    addTapListener(this.actionBtnEl, () => {
       if (this.world.activeStation) {
         this.world.triggerStation(this.world.activeStation);
       }
     });
 
     // Emergency Meeting Button
-    this.container.querySelector('#hud-meeting-btn')?.addEventListener('click', () => {
+    addTapListener(this.container.querySelector('#hud-meeting-btn') as HTMLElement, () => {
       this.modals.showHubModal();
     });
 
@@ -278,14 +294,14 @@ export class HUD {
     });
 
     // Sound toggle
-    this.soundBtnEl.addEventListener('click', () => {
+    addTapListener(this.soundBtnEl, () => {
       const isMuted = this.world.audio.toggleMute();
       this.soundBtnEl.innerHTML = isMuted ? `🔇 <span class="tool-btn-label">Muted</span>` : `🔊 <span class="tool-btn-label">Sound</span>`;
       this.soundBtnEl.classList.toggle('active', !isMuted);
     });
 
     // Map toggle
-    this.container.querySelector('#hud-map-btn')?.addEventListener('click', () => {
+    addTapListener(this.container.querySelector('#hud-map-btn') as HTMLElement, () => {
       this.minimap.toggle();
     });
 
@@ -300,7 +316,7 @@ export class HUD {
       fullscreenBtn.classList.toggle('active', isFs);
     };
 
-    fullscreenBtn?.addEventListener('click', async () => {
+    addTapListener(fullscreenBtn, async () => {
       await orientationManager.toggleFullscreen();
       updateFsBtnState();
     });
