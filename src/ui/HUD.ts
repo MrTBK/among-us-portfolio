@@ -76,11 +76,6 @@ export class HUD {
             🗺️ <span class="tool-btn-label">Map [M]</span>
           </button>
 
-          <!-- Executive CV / Recruiter Fast View -->
-          <button id="hud-cv-btn" class="hud-tool-btn cv-tool-btn" title="Open 1-Page Recruiter Dossier" aria-label="Open Executive CV">
-            📄 <span class="tool-btn-label">Executive CV</span>
-          </button>
-
           <!-- Fullscreen / Landscape Toggle -->
           <button id="hud-fullscreen-btn" class="hud-tool-btn fullscreen-tool-btn" title="Toggle Fullscreen Landscape" aria-label="Toggle Fullscreen Landscape">
             ⛶ <span class="tool-btn-label">Landscape</span>
@@ -315,12 +310,6 @@ export class HUD {
     // Map toggle
     addTapListener(this.container.querySelector('#hud-map-btn') as HTMLElement, () => {
       this.minimap.toggle();
-    });
-
-    // Executive CV / Recruiter Fast View
-    addTapListener(this.container.querySelector('#hud-cv-btn') as HTMLElement, () => {
-      triggerHaptic('medium');
-      this.modals.showExecutiveDossierModal();
     });
 
     // Fullscreen / Landscape toggle

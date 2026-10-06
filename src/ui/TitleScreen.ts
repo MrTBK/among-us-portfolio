@@ -66,10 +66,6 @@ export class TitleScreen {
               <span class="btn-text">START MISSION</span>
             </button>
 
-            <button class="title-menu-btn recruiter-btn" id="btn-direct-portfolio" title="Open 1-Page Recruiter Dossier">
-              <span class="btn-text">📄 RECRUITER FAST VIEW (1-PAGE CV)</span>
-            </button>
-
             <div class="color-picker-row">
               <span class="color-picker-label">SUIT COLOR:</span>
               <div class="color-options" id="color-options">
@@ -339,17 +335,6 @@ export class TitleScreen {
     this.container.querySelector('#close-credits')?.addEventListener('click', () => {
       this.world.audio.playSfx('close');
       creditsModal.classList.add('hidden');
-    });
-
-    // Direct Recruiter Fast View shortcut
-    this.container.querySelector('#btn-direct-portfolio')?.addEventListener('click', () => {
-      this.world.audio.playSfx('click');
-      triggerHaptic('medium');
-      window.location.hash = '#recruiter';
-      if (orientationManager.isTouchDevice()) {
-        orientationManager.requestLandscapeFullscreen();
-      }
-      this.launchCutscene(true);
     });
 
     // START GAME CLICK

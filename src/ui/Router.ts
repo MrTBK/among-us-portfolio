@@ -70,14 +70,6 @@ export class AppRouter {
         this.modals.showCommsProjectsModal(param || 'dataforge');
         break;
 
-      case 'recruiter':
-      case 'dossier':
-      case 'executive':
-      case 'fasttrack':
-        if (this.modals.isOpen() && this.modals.getCurrentModal() === 'executive_dossier') return;
-        this.modals.showExecutiveDossierModal(param || 'summary');
-        break;
-
       case 'admin':
       case 'career':
       case 'cv':
