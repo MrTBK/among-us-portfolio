@@ -3,6 +3,7 @@ import { PlayerColor } from '../game/Player';
 import { MinimapOverlay } from './Minimap';
 import { ModalManager } from './Modals';
 import { VentLocation } from '../game/Vents';
+import { orientationManager } from '../utils/OrientationManager';
 
 export class HUD {
   private container: HTMLElement;
@@ -72,6 +73,11 @@ export class HUD {
           <!-- Map Toggle -->
           <button id="hud-map-btn" class="hud-tool-btn map-tool-btn" title="Open Ship Radar (Press M)" aria-label="Open Map">
             🗺️ <span class="tool-btn-label">Map [M]</span>
+          </button>
+
+          <!-- Fullscreen / Landscape Toggle -->
+          <button id="hud-fullscreen-btn" class="hud-tool-btn fullscreen-tool-btn" title="Toggle Fullscreen Landscape" aria-label="Toggle Fullscreen Landscape">
+            ⛶ <span class="tool-btn-label">Landscape</span>
           </button>
         </div>
       </header>
@@ -283,12 +289,46 @@ export class HUD {
       this.minimap.toggle();
     });
 
+    // Fullscreen / Landscape toggle
+    const fullscreenBtn = this.container.querySelector('#hud-fullscreen-btn') as HTMLElement;
+    const updateFsBtnState = () => {
+      if (!fullscreenBtn) return;
+      const isFs = orientationManager.isFullscreen();
+      fullscreenBtn.innerHTML = isFs 
+        ? `🗗 <span class="tool-btn-label">Exit</span>`
+        : `⛶ <span class="tool-btn-label">Landscape</span>`;
+      fullscreenBtn.classList.toggle('active', isFs);
+    };
+
+    fullscreenBtn?.addEventListener('click', async () => {
+      await orientationManager.toggleFullscreen();
+      updateFsBtnState();
+    });
+
+    document.addEventListener('fullscreenchange', updateFsBtnState);
+    document.addEventListener('webkitfullscreenchange', updateFsBtnState);
+    updateFsBtnState();
+
     // Task list collapse toggle
     const taskList = this.container.querySelector('#task-items-list') as HTMLElement;
     const taskToggleBtn = this.container.querySelector('#task-toggle-btn') as HTMLElement;
     taskToggleBtn?.addEventListener('click', () => {
       const isHidden = taskList.classList.toggle('hidden');
       taskToggleBtn.textContent = isHidden ? '+' : '−';
+    });
+
+    // Auto-collapse task panel on narrow screens or portrait mobile so view isn't obstructed
+    if (window.innerWidth <= 640 || (orientationManager.isTouchDevice() && orientationManager.isPortrait())) {
+      taskList.classList.add('hidden');
+      if (taskToggleBtn) taskToggleBtn.textContent = '+';
+    }
+
+    // Auto-update task list collapse state when orientation changes
+    orientationManager.onOrientationChange((isPortrait) => {
+      if (isPortrait && window.innerWidth <= 640) {
+        taskList.classList.add('hidden');
+        if (taskToggleBtn) taskToggleBtn.textContent = '+';
+      }
     });
 
     // Task list item click warps directly to station

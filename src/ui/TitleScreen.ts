@@ -1,5 +1,6 @@
 import { PlayerColor } from '../game/Player';
 import { GameWorld } from '../game/World';
+import { orientationManager } from '../utils/OrientationManager';
 
 export class TitleScreen {
   private container: HTMLElement;
@@ -311,11 +312,17 @@ export class TitleScreen {
     this.container.querySelector('#btn-direct-portfolio')?.addEventListener('click', () => {
       this.world.audio.playSfx('click');
       window.location.hash = '#hub';
+      if (orientationManager.isTouchDevice()) {
+        orientationManager.requestLandscapeFullscreen();
+      }
       this.launchCutscene(true);
     });
 
     // START GAME CLICK
     this.container.querySelector('#btn-start-game')?.addEventListener('click', () => {
+      if (orientationManager.isTouchDevice()) {
+        orientationManager.requestLandscapeFullscreen();
+      }
       this.launchCutscene();
     });
   }

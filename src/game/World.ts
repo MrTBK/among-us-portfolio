@@ -103,9 +103,17 @@ export class GameWorld {
     // Load Map Image
     this.loadMap();
 
-    // Resize handler
+    // Resize and orientation handlers
     this.handleResize();
     window.addEventListener('resize', () => this.handleResize());
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => this.handleResize(), 60);
+    });
+    if (screen.orientation) {
+      screen.orientation.addEventListener('change', () => {
+        setTimeout(() => this.handleResize(), 60);
+      });
+    }
 
     // Immediately snap camera to player spawn position
     this.camera.follow(this.player.x, this.player.y, 1.0);
