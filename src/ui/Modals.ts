@@ -1,6 +1,7 @@
 import { PORTFOLIO_DATA, Project } from '../data/portfolioData';
 import { GameWorld } from '../game/World';
 import { Station } from '../game/Station';
+import { triggerHaptic } from '../utils/Haptics';
 
 export class ModalManager {
   private container: HTMLElement;
@@ -611,6 +612,32 @@ export class ModalManager {
         </div>
 
         <div class="dialog-body">
+          <!-- INTERACTIVE CARD SWIPE TASK -->
+          <div class="card-swipe-box" id="admin-card-swipe">
+            <div class="swipe-header">
+              <span class="swipe-badge">SECURITY TASK // CARD SWIPE</span>
+              <span class="swipe-status-display" id="swipe-status-msg">PLEASE SWIPE ID CARD</span>
+              <div class="swipe-lights">
+                <span class="swipe-led red-led active" id="swipe-red-led"></span>
+                <span class="swipe-led green-led" id="swipe-green-led"></span>
+              </div>
+            </div>
+            <div class="swipe-scanner-track" id="swipe-track">
+              <div class="swipe-id-card" id="draggable-id-card">
+                <div class="card-chip"></div>
+                <div class="card-id-text">
+                  <strong>MOHAMED AZIZ TABAKH</strong>
+                  <span>DATA DEVELOPER & BI #112</span>
+                </div>
+                <div class="card-barcode">|| | ||| | || |||</div>
+              </div>
+            </div>
+            <div class="swipe-footer-row">
+              <span>💡 Drag card across scanner at normal speed</span>
+              <button class="btn-quick-swipe" id="btn-quick-scan">⚡ Quick Scan ID</button>
+            </div>
+          </div>
+
           <div class="timeline-list">
             ${experience.map(exp => `
               <div class="timeline-item">
@@ -664,6 +691,114 @@ export class ModalManager {
     `;
 
     this.bindDialogEvents();
+
+    // Initialize Card Swipe Task
+    const cardEl = this.container.querySelector('#draggable-id-card') as HTMLElement;
+    const trackEl = this.container.querySelector('#swipe-track') as HTMLElement;
+    const statusMsg = this.container.querySelector('#swipe-status-msg') as HTMLElement;
+    const redLed = this.container.querySelector('#swipe-red-led') as HTMLElement;
+    const greenLed = this.container.querySelector('#swipe-green-led') as HTMLElement;
+    const quickScanBtn = this.container.querySelector('#btn-quick-scan') as HTMLElement;
+
+    let isDragging = false;
+    let startX = 0;
+    let swipeStartTime = 0;
+
+    const onSwipeSuccess = () => {
+      statusMsg.textContent = 'ACCEPTED. CREDENTIALS VERIFIED!';
+      statusMsg.style.color = '#4ade80';
+      redLed?.classList.remove('active');
+      greenLed?.classList.add('active');
+      this.world.audio.playSfx('complete');
+      triggerHaptic('success');
+      this.world.visitedStationIds.add('admin_career');
+      this.world.onProgressChange?.(this.world.visitedStationIds.size, this.world.stations.length);
+    };
+
+    const resetCard = (msg?: string) => {
+      if (msg) {
+        statusMsg.textContent = msg;
+        statusMsg.style.color = '#f87171';
+        triggerHaptic('warning');
+        this.world.audio.playSfx('close');
+      }
+      if (cardEl) {
+        cardEl.style.transition = 'left 0.25s ease';
+        cardEl.style.left = '6px';
+        setTimeout(() => {
+          cardEl.style.transition = '';
+        }, 250);
+      }
+    };
+
+    quickScanBtn?.addEventListener('click', () => {
+      if (!cardEl || !trackEl) return;
+      cardEl.style.transition = 'left 0.45s ease-in-out';
+      const maxLeft = trackEl.clientWidth - cardEl.clientWidth - 10;
+      cardEl.style.left = `${maxLeft}px`;
+      setTimeout(() => {
+        onSwipeSuccess();
+      }, 450);
+    });
+
+    const startDrag = (clientX: number) => {
+      isDragging = true;
+      startX = clientX;
+      swipeStartTime = Date.now();
+      if (cardEl) cardEl.style.transition = '';
+      if (statusMsg) {
+        statusMsg.textContent = 'READING CARD...';
+        statusMsg.style.color = '#38bdf8';
+      }
+      triggerHaptic('selection');
+    };
+
+    const moveDrag = (clientX: number) => {
+      if (!isDragging || !cardEl || !trackEl) return;
+      const dx = clientX - startX;
+      const maxLeft = trackEl.clientWidth - cardEl.clientWidth - 10;
+      const newLeft = Math.max(6, Math.min(maxLeft, 6 + dx));
+      cardEl.style.left = `${newLeft}px`;
+    };
+
+    const endDrag = () => {
+      if (!isDragging || !cardEl || !trackEl) return;
+      isDragging = false;
+      const duration = Date.now() - swipeStartTime;
+      const currentLeft = parseFloat(cardEl.style.left || '6');
+      const maxLeft = trackEl.clientWidth - cardEl.clientWidth - 10;
+
+      if (currentLeft >= maxLeft * 0.75) {
+        if (duration < 200) {
+          resetCard('TOO FAST. BAD READ. TRY AGAIN.');
+        } else if (duration > 950) {
+          resetCard('TOO SLOW. TIMED OUT. TRY AGAIN.');
+        } else {
+          cardEl.style.left = `${maxLeft}px`;
+          onSwipeSuccess();
+        }
+      } else {
+        resetCard();
+      }
+    };
+
+    cardEl?.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      cardEl.setPointerCapture(e.pointerId);
+      startDrag(e.clientX);
+    });
+
+    cardEl?.addEventListener('pointermove', (e) => {
+      moveDrag(e.clientX);
+    });
+
+    cardEl?.addEventListener('pointerup', (e) => {
+      cardEl.releasePointerCapture(e.pointerId);
+      endDrag();
+    });
+
+    cardEl?.addEventListener('pointercancel', endDrag);
+
     this.container.classList.remove('hidden');
   }
 
@@ -683,6 +818,53 @@ export class ModalManager {
         </div>
 
         <div class="dialog-body">
+          <!-- INTERACTIVE WIRE FIXING TASK -->
+          <div class="wire-task-box" id="electrical-wire-task">
+            <div class="wire-task-header">
+              <span class="wire-badge">CIRCUIT RESTORATION TASK // FIX WIRING</span>
+              <span class="wire-status-text" id="wire-status-text">TAP A LEFT WIRE THEN MATCHING RIGHT PORT</span>
+            </div>
+            <div class="wire-board" id="wire-board">
+              <div class="wire-column left">
+                <div class="wire-node" data-color="red" data-side="left">
+                  <span class="wire-color-tag" style="background:#ef4444;"></span>
+                  <span>RED (Python & DWH)</span>
+                </div>
+                <div class="wire-node" data-color="blue" data-side="left">
+                  <span class="wire-color-tag" style="background:#3b82f6;"></span>
+                  <span>BLUE (SQL & SSIS)</span>
+                </div>
+                <div class="wire-node" data-color="yellow" data-side="left">
+                  <span class="wire-color-tag" style="background:#eab308;"></span>
+                  <span>YELLOW (Power BI & DAX)</span>
+                </div>
+                <div class="wire-node" data-color="pink" data-side="left">
+                  <span class="wire-color-tag" style="background:#ec4899;"></span>
+                  <span>PINK (Robotics & C++)</span>
+                </div>
+              </div>
+
+              <div class="wire-column right">
+                <div class="wire-node" data-color="yellow" data-side="right">
+                  <span>TERMINAL YELLOW</span>
+                  <span class="wire-color-tag" style="background:#eab308;"></span>
+                </div>
+                <div class="wire-node" data-color="red" data-side="right">
+                  <span>TERMINAL RED</span>
+                  <span class="wire-color-tag" style="background:#ef4444;"></span>
+                </div>
+                <div class="wire-node" data-color="pink" data-side="right">
+                  <span>TERMINAL PINK</span>
+                  <span class="wire-color-tag" style="background:#ec4899;"></span>
+                </div>
+                <div class="wire-node" data-color="blue" data-side="right">
+                  <span>TERMINAL BLUE</span>
+                  <span class="wire-color-tag" style="background:#3b82f6;"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="skills-task-banner">
             ⚡ <strong>Circuit Status:</strong> Click any technical competence node to calibrate and verify proficiency level!
           </div>
@@ -719,10 +901,76 @@ export class ModalManager {
 
     this.bindDialogEvents();
 
+    // Wire Fixing Task Logic
+    let selectedLeftNode: HTMLElement | null = null;
+    let connectedWires = 0;
+    const wireStatusText = this.container.querySelector('#wire-status-text') as HTMLElement;
+
+    this.container.querySelectorAll('.wire-node[data-side="left"]').forEach(node => {
+      node.addEventListener('click', (e) => {
+        const el = e.currentTarget as HTMLElement;
+        if (el.classList.contains('connected')) return;
+
+        this.container.querySelectorAll('.wire-node[data-side="left"]').forEach(n => n.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedLeftNode = el;
+        triggerHaptic('selection');
+        this.world.audio.playSfx('click');
+        if (wireStatusText) wireStatusText.textContent = `SELECTED ${el.getAttribute('data-color')?.toUpperCase()} — TAP MATCHING TERMINAL`;
+      });
+    });
+
+    this.container.querySelectorAll('.wire-node[data-side="right"]').forEach(node => {
+      node.addEventListener('click', (e) => {
+        const rightEl = e.currentTarget as HTMLElement;
+        if (rightEl.classList.contains('connected') || !selectedLeftNode) return;
+
+        const leftColor = selectedLeftNode.getAttribute('data-color');
+        const rightColor = rightEl.getAttribute('data-color');
+
+        if (leftColor === rightColor) {
+          // Connected!
+          selectedLeftNode.classList.remove('selected');
+          selectedLeftNode.classList.add('connected');
+          rightEl.classList.add('connected');
+          connectedWires++;
+
+          triggerHaptic('medium');
+          this.world.audio.playSfx('complete');
+          selectedLeftNode = null;
+
+          if (connectedWires >= 4) {
+            if (wireStatusText) {
+              wireStatusText.textContent = '⚡ ALL 4 CIRCUITS ONLINE! POWER +100%!';
+              wireStatusText.style.color = '#4ade80';
+            }
+            triggerHaptic('success');
+            this.world.visitedStationIds.add('electrical_skills');
+            this.world.onProgressChange?.(this.world.visitedStationIds.size, this.world.stations.length);
+
+            // Auto calibrate all skill nodes
+            this.container.querySelectorAll('.clickable-skill-node').forEach(sk => {
+              sk.classList.add('calibrated');
+              const ind = sk.querySelector('.node-indicator');
+              if (ind) ind.textContent = '✓ 100% ONLINE';
+            });
+          } else {
+            if (wireStatusText) wireStatusText.textContent = `CIRCUIT ${connectedWires}/4 RESTORED! SELECT NEXT WIRE`;
+          }
+        } else {
+          // Mismatch
+          triggerHaptic('warning');
+          this.world.audio.playSfx('close');
+          if (wireStatusText) wireStatusText.textContent = `MISMATCH! ${leftColor?.toUpperCase()} CANNOT CONNECT TO ${rightColor?.toUpperCase()}`;
+        }
+      });
+    });
+
     // Node click calibration sound
     this.container.querySelectorAll('.clickable-skill-node').forEach(node => {
       node.addEventListener('click', (e) => {
         this.world.audio.playSfx('complete');
+        triggerHaptic('light');
         (e.currentTarget as HTMLElement).classList.add('calibrated');
         const ind = (e.currentTarget as HTMLElement).querySelector('.node-indicator');
         if (ind) ind.textContent = '✓ CALIBRATED';
@@ -816,6 +1064,227 @@ export class ModalManager {
 
     this.bindDialogEvents();
     this.container.classList.remove('hidden');
+  }
+
+  // 7. EXECUTIVE DOSSIER / RECRUITER FAST-TRACK
+  public showExecutiveDossierModal(initialTab: string = 'summary') {
+    this.currentModal = 'executive_dossier';
+    const { personal, education, experience, competitions, skills, projects } = PORTFOLIO_DATA;
+
+    this.container.innerHTML = `
+      <div class="space-dialog dossier-dialog">
+        <div class="dialog-header">
+          <div class="header-tag-box">
+            <span class="station-badge">📄 COMMAND ARCHIVE // FAST-TRACK DOSSIER</span>
+            <span class="dialog-title">RECRUITER 1-PAGE SUMMARY & CV</span>
+          </div>
+          <button class="dialog-close-btn" aria-label="Close">✕</button>
+        </div>
+
+        <div class="dialog-body">
+          <!-- NAVIGATION TABS -->
+          <div class="dossier-tabs-nav" role="tablist">
+            <button class="dossier-tab-btn ${initialTab === 'summary' ? 'active' : ''}" data-tab="summary">
+              📌 Overview & Bio
+            </button>
+            <button class="dossier-tab-btn ${initialTab === 'projects' ? 'active' : ''}" data-tab="projects">
+              💼 Key Projects (${projects.length})
+            </button>
+            <button class="dossier-tab-btn ${initialTab === 'skills' ? 'active' : ''}" data-tab="skills">
+              ⚡ Skills Matrix
+            </button>
+            <button class="dossier-tab-btn ${initialTab === 'resume' ? 'active' : ''}" data-tab="resume">
+              📄 Official CV (PDF)
+            </button>
+          </div>
+
+          <!-- TAB 1: SUMMARY & BIO -->
+          <div class="dossier-tab-pane ${initialTab === 'summary' ? 'active' : ''}" data-pane="summary">
+            <div class="dossier-hero">
+              <img src="${personal.avatarUrl}" alt="${personal.name}" class="dossier-avatar" />
+              <div class="dossier-hero-info">
+                <div class="dossier-name">${personal.name}</div>
+                <div class="dossier-headline">${personal.title}</div>
+                <div class="dossier-bio">${personal.bio}</div>
+                <div class="dossier-quick-bar">
+                  <a href="mailto:${personal.email}" class="dossier-contact-pill">✉️ ${personal.email}</a>
+                  <a href="${personal.linkedinUrl}" target="_blank" rel="noopener noreferrer" class="dossier-contact-pill">🔗 LinkedIn</a>
+                  <a href="${personal.githubUrl}" target="_blank" rel="noopener noreferrer" class="dossier-contact-pill">💻 GitHub</a>
+                  <span class="dossier-contact-pill">📍 ${personal.location}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- KEY CREDENTIALS -->
+            <div class="dossier-section-title">🎓 Education & Specialization</div>
+            <div class="dossier-grid">
+              ${education.map(edu => `
+                <div class="dossier-card">
+                  <div class="dossier-card-header">
+                    <div>
+                      <div class="dossier-card-title">${edu.institution}</div>
+                      <div style="font-size: 11px; color: #38bdf8; font-weight: 600;">${edu.degree} - ${edu.specialization}</div>
+                    </div>
+                    <span class="dossier-badge">${edu.period}</span>
+                  </div>
+                  <div class="dossier-card-desc">📍 ${edu.location}</div>
+                  ${edu.details && edu.details.length > 0 ? `
+                    <ul style="margin: 0; padding-left: 18px; font-size: 11px; color: #94a3b8; display: flex; flex-direction: column; gap: 4px;">
+                      ${edu.details.map(d => `<li>${d}</li>`).join('')}
+                    </ul>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- WORK EXPERIENCE HIGHLIGHT -->
+            <div class="dossier-section-title">💼 Professional Experience</div>
+            <div class="dossier-grid">
+              ${experience.map(exp => `
+                <div class="dossier-card">
+                  <div class="dossier-card-header">
+                    <div>
+                      <div class="dossier-card-title">${exp.role} @ ${exp.company}</div>
+                      <div style="font-size: 11px; color: #38bdf8; font-weight: 600;">📍 ${exp.location}</div>
+                    </div>
+                    <span class="dossier-badge">${exp.period}</span>
+                  </div>
+                  <div class="dossier-card-desc">${exp.description}</div>
+                  <div class="dossier-tags-row">
+                    ${exp.technologies.slice(0, 5).map(tech => `<span class="dossier-mini-tag">${tech}</span>`).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- COMPETITIONS & ACHIEVEMENTS HIGHLIGHT -->
+            <div class="dossier-section-title">🏆 Distinctions & Leadership</div>
+            <div class="dossier-grid">
+              ${competitions.map(c => `
+                <div class="dossier-card">
+                  <div class="dossier-card-header">
+                    <div>
+                      <div class="dossier-card-title">${c.title}</div>
+                      <div style="font-size: 11px; color: #f59e0b; font-weight: 600;">${c.roleOrRank}</div>
+                    </div>
+                    <span class="dossier-badge">${c.date}</span>
+                  </div>
+                  <div class="dossier-card-desc">${c.description}</div>
+                  <div class="dossier-tags-row">
+                    ${c.highlights.map(h => `<span class="dossier-mini-tag">⭐ ${h}</span>`).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- TAB 2: PROJECTS MATRIX -->
+          <div class="dossier-tab-pane ${initialTab === 'projects' ? 'active' : ''}" data-pane="projects">
+            <div class="dossier-grid">
+              ${projects.map(p => `
+                <div class="dossier-card">
+                  <div class="dossier-card-header">
+                    <div>
+                      <div class="dossier-card-title">${p.name}</div>
+                      <div style="font-size: 10px; color: #94a3b8;">${p.roomName}</div>
+                    </div>
+                    <span class="dossier-badge">${p.category}</span>
+                  </div>
+                  <div class="dossier-card-desc">${p.shortDescription}</div>
+                  <div class="dossier-tags-row">
+                    ${p.technologies.slice(0, 5).map(tech => `<span class="dossier-mini-tag">${tech}</span>`).join('')}
+                  </div>
+                  <div class="dossier-actions">
+                    ${p.githubUrl ? `<a href="${p.githubUrl}" target="_blank" rel="noopener noreferrer" class="dossier-mini-btn btn-secondary">💻 Code</a>` : ''}
+                    ${p.demoUrl ? `<a href="${p.demoUrl}" target="_blank" rel="noopener noreferrer" class="dossier-mini-btn btn-primary">🌐 Demo</a>` : ''}
+                    <button class="dossier-mini-btn btn-secondary" data-warp="${p.stationId}">🚀 View in Room</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- TAB 3: SKILLS MATRIX -->
+          <div class="dossier-tab-pane ${initialTab === 'skills' ? 'active' : ''}" data-pane="skills">
+            <div class="dossier-grid">
+              ${skills.map(cat => `
+                <div class="dossier-card">
+                  <div class="dossier-card-header">
+                    <div class="dossier-card-title">${cat.icon} ${cat.category}</div>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 8px;">
+                    ${cat.skills.map(sk => `
+                      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                        <span style="font-size: 11px; font-weight: 600; color: #e2e8f0;">${sk.highlight ? '⭐ ' : ''}${sk.name}</span>
+                        <span class="dossier-mini-tag" style="color: #38bdf8;">${sk.level}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- TAB 4: OFFICIAL CV EMBED -->
+          <div class="dossier-tab-pane ${initialTab === 'resume' ? 'active' : ''}" data-pane="resume">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <span style="font-size: 12px; color: #94a3b8;">
+                📄 Live PDF Preview (High Definition). You can scroll within or download the raw document.
+              </span>
+              <a href="${personal.resumeUrl}" download="Mohamed_Aziz_Tabakh_CV.pdf" class="btn-primary" target="_blank" style="padding: 6px 14px; font-size: 12px;">
+                ⬇️ Download PDF Document
+              </a>
+            </div>
+            <div class="resume-frame-container">
+              <iframe 
+                class="resume-embed-frame" 
+                src="${personal.resumeUrl}#view=FitH" 
+                title="Mohamed Aziz Tabakh Curriculum Vitae"
+              ></iframe>
+            </div>
+            <p style="font-size: 11px; color: #64748b; text-align: center; margin: 0;">
+              Mobile device or browser blocking iframe preview? <a href="${personal.resumeUrl}" target="_blank" style="color: #38bdf8; text-decoration: underline;">Open direct PDF stream in a new tab</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="dialog-footer">
+          <a href="${personal.resumeUrl}" download="Mohamed_Aziz_Tabakh_CV.pdf" class="btn-primary" target="_blank">
+            📄 Download Official CV (PDF)
+          </a>
+          <button class="btn-secondary close-dialog-btn">Return to Skeld Exploration</button>
+        </div>
+      </div>
+    `;
+
+    // Tab switching event handlers
+    const tabBtns = this.container.querySelectorAll('.dossier-tab-btn');
+    const tabPanes = this.container.querySelectorAll('.dossier-tab-pane');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const targetTab = (e.currentTarget as HTMLElement).getAttribute('data-tab');
+        if (!targetTab) return;
+
+        this.world.audio.playSfx('click');
+        triggerHaptic('selection');
+
+        tabBtns.forEach(b => b.classList.remove('active'));
+        (e.currentTarget as HTMLElement).classList.add('active');
+
+        tabPanes.forEach(pane => {
+          if (pane.getAttribute('data-pane') === targetTab) {
+            pane.classList.add('active');
+          } else {
+            pane.classList.remove('active');
+          }
+        });
+      });
+    });
+
+    this.bindDialogEvents();
+    this.container.classList.remove('hidden');
+    this.world.audio.playSfx('open');
   }
 
   private bindDialogEvents() {

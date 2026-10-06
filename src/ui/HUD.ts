@@ -4,6 +4,7 @@ import { MinimapOverlay } from './Minimap';
 import { ModalManager } from './Modals';
 import { VentLocation } from '../game/Vents';
 import { orientationManager } from '../utils/OrientationManager';
+import { triggerHaptic } from '../utils/Haptics';
 
 export class HUD {
   private container: HTMLElement;
@@ -73,6 +74,11 @@ export class HUD {
           <!-- Map Toggle -->
           <button id="hud-map-btn" class="hud-tool-btn map-tool-btn" title="Open Ship Radar (Press M)" aria-label="Open Map">
             🗺️ <span class="tool-btn-label">Map [M]</span>
+          </button>
+
+          <!-- Executive CV / Recruiter Fast View -->
+          <button id="hud-cv-btn" class="hud-tool-btn cv-tool-btn" title="Open 1-Page Recruiter Dossier" aria-label="Open Executive CV">
+            📄 <span class="tool-btn-label">Executive CV</span>
           </button>
 
           <!-- Fullscreen / Landscape Toggle -->
@@ -260,30 +266,36 @@ export class HUD {
     addTapListener(this.ventBtnEl, () => {
       const nearby = this.world.ventManager.nearbyVent;
       if (nearby && !this.world.ventManager.isInsideVent) {
+        triggerHaptic('heavy');
         this.world.enterVent(nearby);
       }
     });
 
     // In-Vent Controls
     addTapListener(this.container.querySelector('#vent-prev-btn') as HTMLElement, () => {
+      triggerHaptic('light');
       this.world.hopPrevVent();
     });
     addTapListener(this.container.querySelector('#vent-next-btn') as HTMLElement, () => {
+      triggerHaptic('light');
       this.world.hopNextVent();
     });
     addTapListener(this.container.querySelector('#vent-exit-btn') as HTMLElement, () => {
+      triggerHaptic('medium');
       this.world.exitVent();
     });
 
     // Use Button Tap
     addTapListener(this.actionBtnEl, () => {
       if (this.world.activeStation) {
+        triggerHaptic('medium');
         this.world.triggerStation(this.world.activeStation);
       }
     });
 
     // Emergency Meeting Button
     addTapListener(this.container.querySelector('#hud-meeting-btn') as HTMLElement, () => {
+      triggerHaptic('heavy');
       this.modals.showHubModal();
     });
 
@@ -303,6 +315,12 @@ export class HUD {
     // Map toggle
     addTapListener(this.container.querySelector('#hud-map-btn') as HTMLElement, () => {
       this.minimap.toggle();
+    });
+
+    // Executive CV / Recruiter Fast View
+    addTapListener(this.container.querySelector('#hud-cv-btn') as HTMLElement, () => {
+      triggerHaptic('medium');
+      this.modals.showExecutiveDossierModal();
     });
 
     // Fullscreen / Landscape toggle
@@ -377,6 +395,7 @@ export class HUD {
 
     joystickBase.addEventListener('touchstart', (e) => {
       e.preventDefault();
+      triggerHaptic('selection');
       const touch = e.changedTouches[0];
       this.world.input.handleTouchStart(touch, 'joystick');
     }, { passive: false });

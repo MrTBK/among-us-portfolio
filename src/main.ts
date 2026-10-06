@@ -75,4 +75,13 @@ class App {
 // Boot application when DOM is ready
 window.addEventListener('DOMContentLoaded', () => {
   new App();
+
+  // Register PWA Service Worker for offline performance & installability
+  if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch((err) => {
+        console.warn('SW registration failed:', err);
+      });
+    });
+  }
 });

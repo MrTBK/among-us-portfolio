@@ -1,5 +1,5 @@
 import { Camera } from './Camera';
-import { Player, PlayerColor } from './Player';
+import { Player, PlayerColor, HatType } from './Player';
 import { Station, STATIONS_CONFIG } from './Station';
 import { Bot, BOTS_CONFIG } from './Bot';
 import { VentManager, VentLocation } from './Vents';
@@ -218,6 +218,10 @@ export class GameWorld {
 
   public setPlayerColor(color: PlayerColor) {
     this.player.setColor(color);
+  }
+
+  public setPlayerHat(hat: HatType) {
+    this.player.setHat(hat);
   }
 
   private ventHopCooldown: number = 0;

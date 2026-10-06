@@ -1,6 +1,7 @@
-import { PlayerColor } from '../game/Player';
+import { PlayerColor, HatType } from '../game/Player';
 import { GameWorld } from '../game/World';
 import { orientationManager } from '../utils/OrientationManager';
+import { triggerHaptic } from '../utils/Haptics';
 
 export class TitleScreen {
   private container: HTMLElement;
@@ -62,7 +63,11 @@ export class TitleScreen {
 
           <div class="title-menu-box">
             <button class="title-menu-btn start-btn" id="btn-start-game">
-              <span class="btn-text">START GAME</span>
+              <span class="btn-text">START MISSION</span>
+            </button>
+
+            <button class="title-menu-btn recruiter-btn" id="btn-direct-portfolio" title="Open 1-Page Recruiter Dossier">
+              <span class="btn-text">📄 RECRUITER FAST VIEW (1-PAGE CV)</span>
             </button>
 
             <div class="color-picker-row">
@@ -81,10 +86,20 @@ export class TitleScreen {
               </div>
             </div>
 
+            <div class="hat-picker-row">
+              <span class="color-picker-label">HAT / ACCESSORY:</span>
+              <div class="hat-options" id="hat-options">
+                <button class="hat-opt-btn active" data-hat="grad_cap" title="Graduation Cap (ESEN Business Intelligence)">🎓 Grad Cap</button>
+                <button class="hat-opt-btn" data-hat="antenna" title="Robot Antenna (Robotics Mentor)">🤖 Antenna</button>
+                <button class="hat-opt-btn" data-hat="tech_visor" title="Cyber Visor (Data Developer & CP)">💻 Cyber Visor</button>
+                <button class="hat-opt-btn" data-hat="crown" title="Gold Crown (TCPC Finalist)">👑 Crown</button>
+                <button class="hat-opt-btn" data-hat="none" title="No Hat">🚫 None</button>
+              </div>
+            </div>
+
             <div class="secondary-btns-row">
               <button class="title-secondary-btn" id="btn-how-to-play">HOW TO PLAY</button>
               <button class="title-secondary-btn" id="btn-quick-credits">CREDENTIALS</button>
-              <button class="title-secondary-btn" id="btn-direct-portfolio" title="Open Portfolio Dossier directly">DOSSIER (CV)</button>
             </div>
           </div>
 
@@ -277,6 +292,8 @@ export class TitleScreen {
         this.world.setPlayerColor(color);
         this.world.audio.playSfx('click');
 
+        triggerHaptic('selection');
+
         // Update active class
         this.container.querySelectorAll('.color-opt-btn').forEach(b => b.classList.remove('active'));
         (e.currentTarget as HTMLElement).classList.add('active');
@@ -286,6 +303,19 @@ export class TitleScreen {
         if (preview) {
           preview.src = `Assets/Images/Player/${color}/${color.toLowerCase()}_right_walk/step1.png`;
         }
+      });
+    });
+
+    // Hat options click
+    this.container.querySelectorAll('.hat-opt-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const hat = (e.currentTarget as HTMLElement).getAttribute('data-hat') as HatType;
+        this.world.setPlayerHat(hat);
+        this.world.audio.playSfx('click');
+        triggerHaptic('selection');
+
+        this.container.querySelectorAll('.hat-opt-btn').forEach(b => b.classList.remove('active'));
+        (e.currentTarget as HTMLElement).classList.add('active');
       });
     });
 
@@ -311,10 +341,11 @@ export class TitleScreen {
       creditsModal.classList.add('hidden');
     });
 
-    // Direct Portfolio Dossier shortcut
+    // Direct Recruiter Fast View shortcut
     this.container.querySelector('#btn-direct-portfolio')?.addEventListener('click', () => {
       this.world.audio.playSfx('click');
-      window.location.hash = '#hub';
+      triggerHaptic('medium');
+      window.location.hash = '#recruiter';
       if (orientationManager.isTouchDevice()) {
         orientationManager.requestLandscapeFullscreen();
       }
@@ -323,6 +354,7 @@ export class TitleScreen {
 
     // START GAME CLICK
     this.container.querySelector('#btn-start-game')?.addEventListener('click', () => {
+      triggerHaptic('medium');
       if (orientationManager.isTouchDevice()) {
         orientationManager.requestLandscapeFullscreen();
       }

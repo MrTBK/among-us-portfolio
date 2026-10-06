@@ -2,6 +2,7 @@ import { MAP_OBSTACLES, RectObstacle } from '../data/mapObstacles';
 
 export type PlayerColor = 'Red' | 'Blue' | 'Green' | 'Yellow' | 'Orange' | 'Pink' | 'Purple' | 'White' | 'Black' | 'Brown';
 export type Direction = 'down' | 'up' | 'left' | 'right';
+export type HatType = 'none' | 'grad_cap' | 'antenna' | 'tech_visor' | 'crown';
 
 export class Player {
   public x: number = 3288;
@@ -17,6 +18,7 @@ export class Player {
   public direction: Direction = 'down';
   public isMoving: boolean = false;
   public color: PlayerColor = 'Red';
+  public currentHat: HatType = 'grad_cap';
   public isVenting: boolean = false;
 
   // Animation state
@@ -192,6 +194,9 @@ export class Player {
       ctx.restore();
     }
 
+    // Draw Hat on head
+    this.drawHat(ctx, screenX, drawY + 8);
+
     // Name tag above head
     ctx.save();
     ctx.font = 'bold 13px Rubik, Arial, sans-serif';
@@ -199,7 +204,162 @@ export class Player {
     ctx.shadowColor = 'black';
     ctx.shadowBlur = 4;
     ctx.fillStyle = '#ffffff';
-    ctx.fillText('Mohamed Aziz Tabakh', screenX, drawY - 10);
+    ctx.fillText('Mohamed Aziz Tabakh', screenX, drawY - (this.currentHat === 'none' ? 10 : 20));
+    ctx.restore();
+  }
+
+  public setHat(newHat: HatType) {
+    this.currentHat = newHat;
+  }
+
+  public drawHat(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
+    if (this.currentHat === 'none') return;
+
+    ctx.save();
+    const facingOffset = this.direction === 'right' ? 4 : this.direction === 'left' ? -4 : 0;
+    const x = cx + facingOffset;
+    const y = cy;
+
+    switch (this.currentHat) {
+      case 'grad_cap': {
+        // Skull cap base
+        ctx.fillStyle = '#1e1b4b';
+        ctx.strokeStyle = '#020617';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(x, y + 2, 13, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Diamond mortarboard
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.moveTo(x, y - 9);
+        ctx.lineTo(x + 20, y - 3);
+        ctx.lineTo(x, y + 3);
+        ctx.lineTo(x - 20, y - 3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Center button
+        ctx.fillStyle = '#eab308';
+        ctx.beginPath();
+        ctx.arc(x, y - 3, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Golden Tassel
+        ctx.strokeStyle = '#eab308';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 3);
+        ctx.quadraticCurveTo(x + 10, y + 2, x + 14, y + 14);
+        ctx.stroke();
+
+        // Tassel tip
+        ctx.fillStyle = '#ca8a04';
+        ctx.beginPath();
+        ctx.arc(x + 14, y + 14, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+
+      case 'antenna': {
+        // Metallic base
+        ctx.fillStyle = '#475569';
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(x, y + 3, 8, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Rod
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, y + 3);
+        ctx.lineTo(x, y - 16);
+        ctx.stroke();
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Pulsing cyan beacon bulb on top
+        const now = performance.now();
+        const pulse = Math.sin(now * 0.008) > 0;
+        ctx.fillStyle = pulse ? '#22d3ee' : '#0891b2';
+        ctx.shadowColor = '#22d3ee';
+        ctx.shadowBlur = pulse ? 12 : 4;
+        ctx.beginPath();
+        ctx.arc(x, y - 18, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        break;
+      }
+
+      case 'tech_visor': {
+        // Futuristic cyber visor scanner
+        ctx.fillStyle = '#0284c7';
+        ctx.strokeStyle = '#020617';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(x - 16, y - 5, 32, 9, 3);
+        ctx.fill();
+        ctx.stroke();
+
+        // Glowing visor scanner line
+        ctx.fillStyle = '#38bdf8';
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 8;
+        ctx.fillRect(x - 12, y - 3, 24, 4);
+
+        // Tech side nodes
+        ctx.fillStyle = '#22c55e';
+        ctx.shadowColor = '#22c55e';
+        ctx.shadowBlur = 4;
+        ctx.beginPath();
+        ctx.arc(x - 13, y, 2.5, 0, Math.PI * 2);
+        ctx.arc(x + 13, y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+
+      case 'crown': {
+        // Gold Crown with jewels
+        ctx.fillStyle = '#eab308';
+        ctx.strokeStyle = '#713f12';
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.moveTo(x - 15, y + 3);
+        ctx.lineTo(x - 16, y - 9);
+        ctx.lineTo(x - 8, y - 4);
+        ctx.lineTo(x, y - 13);
+        ctx.lineTo(x + 8, y - 4);
+        ctx.lineTo(x + 16, y - 9);
+        ctx.lineTo(x + 15, y + 3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Jewel accents
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(x, y - 5, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(x - 9, y - 1, 2, 0, Math.PI * 2);
+        ctx.arc(x + 9, y - 1, 2, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+    }
+
     ctx.restore();
   }
 }
