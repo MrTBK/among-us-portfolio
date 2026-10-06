@@ -1,0 +1,19 @@
+{
+  "name": "among-us-portfolio",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Interactive Among Us-themed portfolio for Mohamed Aziz Tabakh — Business Intelligence Student & Data Developer",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["among-us", "portfolio", "data-developer", "interactive-portfolio", "typescript", "vite"],
+  "author": "Mohamed Aziz Tabakh",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3"
+  }
+}
