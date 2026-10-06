@@ -1,5 +1,10 @@
 # Mohamed Aziz Tabakh — Interactive Spaceship Portfolio
 
+[![Deploy to GitHub Pages](https://github.com/MrTBK/among-us-portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/MrTBK/among-us-portfolio/actions/workflows/deploy.yml)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Play%20Now-success?style=for-the-badge&logo=rocket)](https://mrtbk.github.io/among-us-portfolio/)
+
+🌐 **Live Website**: [https://mrtbk.github.io/among-us-portfolio/](https://mrtbk.github.io/among-us-portfolio/)
+
 An authentic, production-quality interactive personal portfolio web application transformed from the Among Us game engine and assets for **Mohamed Aziz Tabakh**.
 
 > **Business Intelligence Student & Data Developer**  
